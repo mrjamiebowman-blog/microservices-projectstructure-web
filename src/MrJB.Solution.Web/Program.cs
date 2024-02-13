@@ -4,7 +4,7 @@ using MrJB.Solution.Web.Components;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
-//builder.AddServiceDefaults();
+builder.AddServiceDefaults();
 builder.AddRedisOutputCache("cache");
 
 // Add services to the container.
@@ -21,14 +21,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-
 app.UseAntiforgery();
-
 app.UseOutputCache();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-    
-//app.MapDefaultEndpoints();
+
+// aspire
+app.MapDefaultEndpoints();
 
 app.Run();
