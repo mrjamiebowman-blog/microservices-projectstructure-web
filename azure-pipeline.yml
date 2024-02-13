@@ -1,0 +1,66 @@
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    exclude:
+    - pipelines/azure-pipelines-package-user.yml
+
+resources:
+  repositories:
+    - repository: DevOps
+      type: git
+      name: 'MrJB/MrJB.IaC.Azure'
+
+parameters:
+- name: justmock
+  displayName: "JustMock"
+  type: boolean
+  default: false
+
+variables:
+  # group
+  - group: CommonCloudStorage
+  - group: MrJBAppPipeline
+
+  # agent
+  - name: vmImageName
+    value: 'ubuntu-latest'
+
+  # docker registry
+  - name: dockerRegistryServiceConnection
+    value: 'redomadigital-acr'
+  - name: containerRegistry
+    value: 'redomadigital.azurecr.io'
+  - name: imageRepository
+    value: 'mrjb/$(dockerRepository)'
+
+  # docker
+  - name: dockerRepository
+    value: 'ms-web-mrjb'
+  - name: dockerfilePath
+    value: '$(Build.SourcesDirectory)/src/MrJB.Solution.Web/Dockerfile'
+  - name: tag
+    value: $(Build.BuildNumber)
+
+stages:
+  # .net buid & test stage
+- ${{ if eq(parameters.justmock, true) }}:
+  - template: /pipeline-templates/justmock/pipeline.yaml@DevOps
+    parameters:
+      dockerRepository: $(dockerRepository)
+      dockerRegistryServiceConnection: $(dockerRegistryServiceConnection)
+      dockerfilePath: $(dockerfilePath)
+      projectPath: "src/MrJB.IdentityServer/MrJB.Solution.Web.csproj"
+  # docker stage
+- template: /pipeline-templates/docker/pipeline.yaml@DevOps
+  parameters:  
+    vmImageName: $(vmImageName)
+    dockerRegistryServiceConnection: $(dockerRegistryServiceConnection)
+    imageRepository: $(imageRepository)
+    dockerfilePath: $(dockerfilePath)
+    nugetAzureSubscription: $(nugetAzureSubscription)
+    nugetKeyVaultName: $(nugetKeyVaultName)
+    companyLabel: $(companyLabel)
+    tagEnvironment: 'dev'
+    debug: $(debug)
